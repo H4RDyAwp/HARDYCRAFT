@@ -1,8 +1,11 @@
 package hrd.h4rdykrft.render;
 
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.EXTTextureFilterAnisotropic;
 import org.lwjgl.stb.STBImage;
 import org.lwjgl.system.MemoryStack;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import static org.lwjgl.opengl.GL33.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -31,6 +34,11 @@ public class Texture {
                 throw new RuntimeException("Не удалось загрузить текстуру: " + path);
             }
         }
+        FloatBuffer maxAnisotropy = BufferUtils.createFloatBuffer(2);
+        glGetFloatv(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
+
+        // Применяем максимальное сглаживание углов (обычно x8 или x16)
+        glTexParameterf(GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy.get(0));
     }
 
     public void bind() {

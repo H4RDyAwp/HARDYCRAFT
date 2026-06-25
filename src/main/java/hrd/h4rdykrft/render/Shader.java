@@ -79,4 +79,11 @@ public class Shader {
             throw new RuntimeException("Failed to read shader file: " + path, e);
         }
     }
+
+    public void setUniform(String name, float x, float y, float z) {
+        int location = glGetUniformLocation(programId, name);
+        if (location != -1) {
+            glUniform3f(location, x, y, z);
+        }
+    }
 }

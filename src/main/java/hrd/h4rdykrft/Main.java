@@ -17,6 +17,7 @@ import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
 
+import static org.joml.Math.floor;
 import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL33.*;
@@ -47,6 +48,7 @@ public class Main {
     private final float MAX_REACH_DISTANCE = 6.0f; // Дистанция работы рук (как в Minecraft)
     private Font uiFont;
     private Label fpsLabel;
+    private Label posLabel;
     public void run() {
         init();
         loop();
@@ -131,6 +133,9 @@ public class Main {
         fpsLabel = new Label(uiFont, 10, 10);
         fpsLabel.color = new float[]{1.0f, 1.0f, 1.0f, 1.0f}; // Сделаем текст желтым для контраста
         uiManager.addElement(fpsLabel);
+        posLabel = new Label(uiFont, 10, 28);
+        posLabel.color = new float[]{1.0f, 1.0f, 1.0f, 1.0f}; // Сделаем текст желтым для контраста
+        uiManager.addElement(posLabel);
     }
 
     private void loop() {
@@ -156,7 +161,7 @@ public class Main {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // 1. ФИЗИКА И ДВИЖЕНИЕ: Игрок считывает нажатия клавиатуры
-            localPlayer.handleKeyboard(window);
+            localPlayer.update(window,0.016f,world);
 
             // 2. ОБНОВЛЕНИЕ КАМЕРЫ: Камера жестко встает на позицию глаз игрока
             camera.update(localPlayer.getPosition(), localPlayer.getPitch(), localPlayer.getYaw());
@@ -219,13 +224,24 @@ public class Main {
                 // Динамически обновляем текст
                 fpsLabel.setText("FPS: " + currentFps);
             }
+            posLabel.setText("X:" + floor(localPlayer.getPosition().x) + " Y" + floor(localPlayer.getPosition().y) + " Z" + floor(localPlayer.getPosition().z));
             // Активация шейдерной программы
+            // Вычисляем deltaTime (разницу во времени между кадрами)
+
+
+            Vector3f skyColor = world.getSkyColor();
+            glClearColor(skyColor.x, skyColor.y, skyColor.z, 1.0f);
+
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            Vector3f sunDir = world.getSunDirection();
+
             shader.bind();
 
             // Загрузка матриц трансформации в шейдер (в Uniform-переменные)
             shader.setUniform("projection", projection);
             shader.setUniform("view", view);
-
+            shader.setUniform("sunDirection", sunDir.x, sunDir.y, sunDir.z);
             // Активация и привязка текстурного атласа блоков
             glActiveTexture(GL_TEXTURE0);
             atlas.bind();
