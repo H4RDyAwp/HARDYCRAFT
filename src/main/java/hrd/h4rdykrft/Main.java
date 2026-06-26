@@ -52,12 +52,17 @@ public class Main {
     public void run() {
         init();
         loop();
+        if (world != null) {
+            world.shutdown();
+        }
 
+        // Освобождение ресурсов OpenGL и GLFW
         // Очистка памяти при закрытии игры
         glfwFreeCallbacks(window);
         glfwDestroyWindow(window);
         glfwTerminate();
         glfwSetErrorCallback(null).free();
+        System.exit(0);
     }
 
     private void init() {
@@ -229,19 +234,14 @@ public class Main {
             // Вычисляем deltaTime (разницу во времени между кадрами)
 
 
-            Vector3f skyColor = world.getSkyColor();
-            glClearColor(skyColor.x, skyColor.y, skyColor.z, 1.0f);
-
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            Vector3f sunDir = world.getSunDirection();
 
             shader.bind();
 
             // Загрузка матриц трансформации в шейдер (в Uniform-переменные)
             shader.setUniform("projection", projection);
             shader.setUniform("view", view);
-            shader.setUniform("sunDirection", sunDir.x, sunDir.y, sunDir.z);
             // Активация и привязка текстурного атласа блоков
             glActiveTexture(GL_TEXTURE0);
             atlas.bind();
@@ -254,7 +254,7 @@ public class Main {
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
-        System.exit(0);
+
     }
 
     public static void main(String[] args) {

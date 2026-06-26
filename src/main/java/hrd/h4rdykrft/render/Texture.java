@@ -19,7 +19,8 @@ public class Texture {
         // GL_NEAREST сохраняет четкость пикселей (для Pixel Art)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         try (MemoryStack stack = stackPush()) {
             IntBuffer w = stack.mallocInt(1);
             IntBuffer h = stack.mallocInt(1);
@@ -28,17 +29,12 @@ public class Texture {
             ByteBuffer data = STBImage.stbi_load(path, w, h, comp, 4);
             if (data != null) {
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w.get(), h.get(), 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-                glGenerateMipmap(GL_TEXTURE_2D);
+
                 STBImage.stbi_image_free(data);
             } else {
                 throw new RuntimeException("Не удалось загрузить текстуру: " + path);
             }
         }
-        FloatBuffer maxAnisotropy = BufferUtils.createFloatBuffer(2);
-        glGetFloatv(EXTTextureFilterAnisotropic.GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy);
-
-        // Применяем максимальное сглаживание углов (обычно x8 или x16)
-        glTexParameterf(GL_TEXTURE_2D, EXTTextureFilterAnisotropic.GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAnisotropy.get(0));
     }
 
     public void bind() {

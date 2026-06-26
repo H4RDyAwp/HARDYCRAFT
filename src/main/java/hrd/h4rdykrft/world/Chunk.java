@@ -8,27 +8,60 @@ import java.nio.FloatBuffer;
 import static org.lwjgl.opengl.GL33.*;
 
 public class Chunk {
-    public static final int SIZE_X = 16, SIZE_Y = 512, SIZE_Z = 8;
+    public static final int SIZE_X = 16, SIZE_Y = 512, SIZE_Z = 16;
 
     private static final int ATLAS_SIZE = 512;
     private static final int TILE_SIZE = 16;
     private static final float STEP = (float) TILE_SIZE / ATLAS_SIZE;
-
-    // ОПТИМИЗАЦИЯ: Увеличиваем буфер, так как теперь 1 вершина = 8 float (X,Y,Z, U,V, NX,NY,NZ)
+    public boolean hasChanges = false;
+    // Буфер для вершин: 1 вершина = 8 float (X,Y,Z, U,V, NX,NY,NZ)
     private static final FloatBuffer meshBuffer = MemoryUtil.memAllocFloat(3000000);
 
     public final int chunkX, chunkZ;
 
-    // ОПТИМИЗАЦИЯ: Одномерный массив вместо трехмерного для идеального Cache Locality
+    // Одномерный массив вокселей для идеального Cache Locality
     private final byte[] voxels = new byte[SIZE_X * SIZE_Y * SIZE_Z];
 
     private int vao, vbo, vertexCount;
     public boolean isDirty = true;
 
+    // КОНСТРУКТОР 1: Генерация нового ландшафта через шум
     public Chunk(int chunkX, int chunkZ, FastNoiseLite noise) {
         this.chunkX = chunkX;
         this.chunkZ = chunkZ;
         generateTerrain(noise);
+    }
+
+    // КОНСТРУКТОР 2: Загрузка существующего чанка из массива байт (с диска)
+    public Chunk(int chunkX, int chunkZ, byte[] savedVoxels) {
+        this.chunkX = chunkX;
+        this.chunkZ = chunkZ;
+        System.arraycopy(savedVoxels, 0, this.voxels, 0, Math.min(savedVoxels.length, this.voxels.length));
+        this.isDirty = true;
+    }
+
+    // Возвращает массив вокселей для сохранения в файл в классе World
+    public byte[] getBlocksData() {
+        return this.voxels;
+    }
+
+    public void setLocalBlock(int localX, int y, int localZ, byte blockId) {
+        if (localX >= 0 && localX < SIZE_X && y >= 0 && y < SIZE_Y && localZ >= 0 && localZ < SIZE_Z) {
+            int idx = getVoxelIndex(localX, y, localZ);
+
+            // ОПТИМИЗАЦИЯ: Взводим флаг изменений ТОЛЬКО если новый блок действительно отличается от старого
+            if (this.voxels[idx] != blockId) {
+                this.voxels[idx] = blockId;
+                this.hasChanges = true;
+            }
+        }
+    }
+
+    public byte getLocalBlock(int localX, int y, int localZ) {
+        if (localX >= 0 && localX < SIZE_X && y >= 0 && y < SIZE_Y && localZ >= 0 && localZ < SIZE_Z) {
+            return this.voxels[getVoxelIndex(localX, y, localZ)];
+        }
+        return 0;
     }
 
     // Индексация подстроена под порядок обхода в циклах (y - внутренний)
@@ -113,7 +146,7 @@ public class Chunk {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, meshBuffer, GL_STATIC_DRAW);
 
-        // НОВОЕ: Настраиваем атрибуты для 8 float (X,Y,Z, U,V, NX,NY,NZ)
+        // Настройка атрибутов для 8 float (X,Y,Z, U,V, NX,NY,NZ)
         int stride = 8 * Float.BYTES;
 
         // Location 0: Позиция (3 float)
@@ -186,34 +219,30 @@ public class Chunk {
         }
     }
 
-    // НОВОЕ: Принимаем NX, NY, NZ и кладем их в буфер
     private void addVertex(FloatBuffer buffer, float x, float y, float z, float u, float v, float nx, float ny, float nz) {
-        buffer.put(x).put(y).put(z);
-        buffer.put(u).put(v);
-        buffer.put(nx).put(ny).put(nz);
+        buffer.put(x);
+        buffer.put(y);
+        buffer.put(z);
+        buffer.put(u);
+        buffer.put(v);
+        buffer.put(nx);
+        buffer.put(ny);
+        buffer.put(nz);
         vertexCount++;
     }
 
-    public byte getLocalBlock(int x, int y, int z) {
-        if (x < 0 || x >= SIZE_X || y < 0 || y >= SIZE_Y || z < 0 || z >= SIZE_Z) return 0;
-        return voxels[getVoxelIndex(x, y, z)];
-    }
-
-    public void setLocalBlock(int x, int y, int z, byte id) {
-        if (x >= 0 && x < SIZE_X && y >= 0 && y < SIZE_Y && z >= 0 && z < SIZE_Z) {
-            voxels[getVoxelIndex(x, y, z)] = id;
-            isDirty = true;
-        }
-    }
-
+    // Отрисовка чанка. Вызывайте в цикле рендеринга главного потока
     public void render() {
         if (vertexCount == 0) return;
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-    }
-
-    public void cleanup() {
-        if (vao != 0) glDeleteVertexArrays(vao);
-        if (vbo != 0) glDeleteBuffers(vbo);
+        glBindVertexArray(vao);glDrawArrays(GL_TRIANGLES, 0, vertexCount);}
+    public void cleanup()
+    {
+        if (vao != 0) {
+            glDeleteVertexArrays(vao);
+            vao = 0;
+        }
+        if (vbo != 0) {
+            glDeleteBuffers(vbo);vbo = 0;
+        }
     }
 }
