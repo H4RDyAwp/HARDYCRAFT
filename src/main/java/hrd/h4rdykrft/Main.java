@@ -158,7 +158,7 @@ public class Main {
         posLabel.color = new float[]{1.0f, 1.0f, 1.0f, 1.0f}; // Сделаем текст желтым для контраста
         uiManager.addElement(posLabel);
         Button testButton = new Button(10, 56, 100, 30, uiFont, "Tp back", () -> {
-            localPlayer.setPosition(new Vector3f(0,512,0));
+            localPlayer.setPosition(new Vector3f(0,100,0));
         });
         uiManager.addElement(testButton);
     }
