@@ -188,6 +188,7 @@ public class Player {
 
     // Геттеры и сеттеры
     public Vector3f getPosition() { return position; }
+    public void setPosition(Vector3f pos) { position.x = pos.x;position.y = pos.y; position.z = pos.z; }
     public float getPitch() { return pitch; }
     public void setPitch(float pitch) { this.pitch = pitch; }
     public float getYaw() { return yaw; }

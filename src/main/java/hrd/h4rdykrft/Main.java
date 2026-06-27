@@ -1,9 +1,6 @@
 package hrd.h4rdykrft;
 
-import hrd.h4rdykrft.gui.Font;
-import hrd.h4rdykrft.gui.Label;
-import hrd.h4rdykrft.gui.Panel;
-import hrd.h4rdykrft.gui.UIManager;
+import hrd.h4rdykrft.gui.*;
 import hrd.h4rdykrft.render.Camera;
 import hrd.h4rdykrft.render.Renderer;
 import hrd.h4rdykrft.render.Shader;
@@ -36,7 +33,7 @@ public class Main {
     private UIManager uiManager;
     private Shader uiShader;
     // Элементы интерфейса для теста
-
+    private boolean isMenuOpen = false; // По умолчанию игра в режиме обзора
     // Переменные для расчета FPS
     private double lastFpsCheckTime = 0;
     private int fpsCount = 0;
@@ -94,9 +91,12 @@ public class Main {
                     (vidmode.height() - 720) / 2
             );
         }
+        glfwSetFramebufferSizeCallback(window, (windowHandle, width, height) -> {
+            glViewport(0, 0, width, height);
+        });
 
         glfwMakeContextCurrent(window);
-        glfwSwapInterval(1); // Включение вертикальной синхронизации (V-Sync)
+
         glfwShowWindow(window);
 
         // Критически важно для связки LWJGL и OpenGL функций
@@ -108,7 +108,7 @@ public class Main {
         glCullFace(GL_BACK);
 
         // Блокируем курсор мыши внутри окна (режим "захвата" для шутеров)
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         // Инициализация базовых игровых систем
         world = new World();
@@ -128,7 +128,23 @@ public class Main {
         atlas = new Texture("textures/atlas.png");
         // Привязываем движение мыши к повороту головы ИГРОКА, а не камеры напрямую
         glfwSetCursorPosCallback(window, (w, xpos, ypos) -> {
-            localPlayer.handleMouse(xpos, ypos);
+            if (!isMenuOpen) {
+                localPlayer.handleMouse(xpos, ypos);
+            }
+        });
+        glfwSetKeyCallback(window, (windowHandle, key, scancode, action, mods) -> {
+            if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+                // Меняем состояние на противоположное
+                isMenuOpen = !isMenuOpen;
+
+                if (isMenuOpen) {
+                    // Освобождаем мышь для кликов по UI
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                } else {
+                    // Возвращаем захват мыши для игры
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                }
+            }
         });
         // Загружаем текстуру шрифта (Сетка ASCII 16x16, например классический шрифт Minecraft)
         // Настройка вывода ошибок GLFW
@@ -141,6 +157,10 @@ public class Main {
         posLabel = new Label(uiFont, 10, 28);
         posLabel.color = new float[]{1.0f, 1.0f, 1.0f, 1.0f}; // Сделаем текст желтым для контраста
         uiManager.addElement(posLabel);
+        Button testButton = new Button(10, 56, 100, 30, uiFont, "Tp back", () -> {
+            localPlayer.setPosition(new Vector3f(0,512,0));
+        });
+        uiManager.addElement(testButton);
     }
 
     private void loop() {
@@ -209,7 +229,14 @@ public class Main {
             // Сохраняем состояние кнопок, чтобы одиночный клик не превращался в "пулеметное" уничтожение блоков
             leftMousePressed = currentLeft;
             rightMousePressed = currentRight;
+            double[] mouseX = new double[1];
+            double[] mouseY = new double[1];
+            glfwGetCursorPos(window, mouseX, mouseY);
 
+            boolean isMousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+
+// Передаем данные в менеджер интерфейса
+            uiManager.handleInput((float) mouseX[0], (float) mouseY[0], isMousePressed);
             // 5. МАТЕМАТИКА КАМЕРЫ И РЕНДЕРИНГ
             glfwGetWindowSize(window, width, height);
             float aspect = height[0] > 0 ? (float) width[0] / height[0] : 1.0f;
@@ -246,6 +273,7 @@ public class Main {
             glActiveTexture(GL_TEXTURE0);
             atlas.bind();
             shader.setUniform("texture1", 0);
+            // Получаем координаты курсора и состояние левой кнопки мыши
 
             // Отрисовка геометрии мира
             renderer.renderWorld(world, shader);

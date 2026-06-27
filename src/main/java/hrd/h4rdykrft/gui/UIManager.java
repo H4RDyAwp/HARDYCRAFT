@@ -18,7 +18,13 @@ public class UIManager {
     public void addElement(UIElement element) {
         elements.add(element);
     }
-
+    public void handleInput(float mouseX, float mouseY, boolean isPressed) {
+        for (UIElement element : elements) {
+            if (element instanceof Button) {
+                ((Button) element).handleInput(mouseX, mouseY, isPressed);
+            }
+        }
+    }
     public void render(int windowWidth, int windowHeight) {
         // Настройка ортографической проекции
         projection.setOrtho(0, windowWidth, windowHeight, 0, -1, 1);
