@@ -93,7 +93,7 @@ public class Button extends UIElement {
 
         // Передаем цвет в шейдер
         shader.setUniform("color", currentColor[0], currentColor[1], currentColor[2], currentColor[3]);
-        shader.setUniform("isText", 0); // Отключаем текстурирование текста для фона
+        shader.setUniform("renderMode", 0); // Отключаем текстурирование текста для фона
         shader.setUniform("offset", x, y);
 
         glBindVertexArray(vao);

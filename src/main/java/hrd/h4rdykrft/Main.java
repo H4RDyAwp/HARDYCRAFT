@@ -21,7 +21,6 @@ import static org.lwjgl.opengl.GL33.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Main {
-
     // Идентификаторы окна и главные модули движка
     private long window;
     private World world;
@@ -46,6 +45,8 @@ public class Main {
     private Font uiFont;
     private Label fpsLabel;
     private Label posLabel;
+    private Image img;
+    private Inventory inventory;
     public void run() {
         init();
         loop();
@@ -121,7 +122,7 @@ public class Main {
 
         // Инициализация игрока: передаем UUID, имя и стартовую позицию в мире
         // Координата Y выставлена повыше (120f), чтобы игрок гарантированно заспавнился НАД землей
-        localPlayer = new Player("local-player-id", "Steve", new Vector3f(8f, 120f, 22f));
+        localPlayer = new Player("local-player-id", "Steve", new Vector3f(8f, 30f, 22f));
 
         // Загрузка ресурсов (Замени пути на актуальные для твоей структуры папок, если они отличаются)
         shader = new Shader("shaders/main.vert", "shaders/main.frag");
@@ -161,6 +162,15 @@ public class Main {
             localPlayer.setPosition(new Vector3f(0,100,0));
         });
         uiManager.addElement(testButton);
+        inventory = new Inventory(1280,720,10,1);
+        inventory.addItem(1);
+        inventory.addItem(2);
+        inventory.addItem(3);
+        inventory.addItem(4);
+        inventory.addItem(5);
+        inventory.addItem(6);
+        inventory.addItem(7);
+        uiManager.addElement(inventory);
     }
 
     private void loop() {
@@ -171,13 +181,28 @@ public class Main {
         int[] width = new int[1];
         int[] height = new int[1];
         Panel panel = new Panel(50, 50, 5, 5);
+        // Задаем размеры полоски ХП
+        float hpWidth = 520.0f;
+        float hpHeight = 16.0f;
 
+// Высчитываем позицию: по центру экрана горизонтально, и чуть выше нижнего края
+// windowWidth и windowHeight — это текущие размеры твоего окна glfw
+        float hpX = (width[0] / 2.0f) - (hpWidth / 2.0f);
+        float hpY = height[0] - 45.0f; // 45 пикселей от низа экрана (чтобы быть над хотбаром или рядом)
+
+// Создаем экземпляр полоски и отдаем его под контроль менеджеру интерфейса
+        HealthBar healthBar = new HealthBar(hpX, hpY, hpWidth, hpHeight, localPlayer);
+        uiManager.addElement(healthBar);
         panel.color = new float[]{1f, 1f, 1f, 0.6f}; // Темно-серый полупрозрачный
         uiManager.addElement(panel);
         while (!glfwWindowShouldClose(window)) {
             // ИСПРАВЛЕНИЕ 1: Сначала получаем актуальные размеры окна
             glfwGetWindowSize(window, width, height);
-
+            inventory.update(window,width[0],height[0]);
+            hpX = (width[0] / 2.0f) - (hpWidth / 2.0f);
+            hpY = height[0] - 100.0f; // 45 пикселей от низа экрана (чтобы быть над хотбаром или рядом)
+            healthBar.x = hpX;
+            healthBar.y = hpY;
             // ИСПРАВЛЕНИЕ 2: Теперь считаем центр экрана корректно
             panel.x = (float) ((double) width[0] / 2 - 2.5);
             panel.y = (float) ((double) height[0] / 2 - 2.5);
@@ -189,7 +214,7 @@ public class Main {
             localPlayer.update(window,0.016f,world);
 
             // 2. ОБНОВЛЕНИЕ КАМЕРЫ: Камера жестко встает на позицию глаз игрока
-            camera.update(localPlayer.getPosition(), localPlayer.getPitch(), localPlayer.getYaw());
+            camera.update(localPlayer.getEyePosition(), localPlayer.getPitch(), localPlayer.getYaw());
 
             // 3. ГЕНЕРАЦИЯ МИРА: Подгружаем/удаляем чанки вокруг текущей позиции игрока
             world.update(localPlayer.getPosition().x, localPlayer.getPosition().z);
@@ -220,7 +245,7 @@ public class Main {
 
                         // Проверка коллизии: не ставим блок туда, где сейчас ноги (playerY) или голова (playerY + 1) игрока
                         if (!(ray.airX == playerX && (ray.airY == playerY || ray.airY == playerY + 1) && ray.airZ == playerZ)) {
-                            world.setBlock(ray.airX, ray.airY, ray.airZ, (byte) 3);
+                            world.setBlock(ray.airX, ray.airY, ray.airZ, (byte) inventory.getSelectedItem());
                         }
                     }
                 }
