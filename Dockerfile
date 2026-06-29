@@ -1,0 +1,11 @@
+# Stage 1: Build the application using Gradle with JDK 25
+FROM gradle:jdk-25 AS build
+COPY --chown=gradle:gradle . /home/gradle/src
+WORKDIR /home/gradle/src
+RUN gradle build --no-daemon -x test
+# Stage 2: Run the application using a lightweight JDK 25 JRE
+FROM eclipse-temurin:25-jre-alpine
+WORKDIR /app
+COPY --from=build /home/gradle/src/build/libs/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
