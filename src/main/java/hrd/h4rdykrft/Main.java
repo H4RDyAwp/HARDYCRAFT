@@ -1,6 +1,9 @@
 package hrd.h4rdykrft;
 
 import hrd.h4rdykrft.gui.*;
+import hrd.h4rdykrft.network.GameClient;
+import hrd.h4rdykrft.network.GameServer;
+import hrd.h4rdykrft.network.NetworkConfig;
 import hrd.h4rdykrft.render.Camera;
 import hrd.h4rdykrft.render.Renderer;
 import hrd.h4rdykrft.render.Shader;
@@ -47,9 +50,17 @@ public class Main {
     private Label posLabel;
     private Image img;
     private Inventory inventory;
+    private GameClient gameClient;
+    private String multiplayerUsername = "Steve";
+    private String multiplayerHost;
+    private int multiplayerTcpPort = NetworkConfig.TCP_PORT;
+    private int multiplayerUdpPort = NetworkConfig.UDP_PORT;
     public void run() {
         init();
         loop();
+        if (gameClient != null) {
+            gameClient.disconnect();
+        }
         if (world != null) {
             world.shutdown();
         }
@@ -121,8 +132,36 @@ public class Main {
         // Пример добавления элемента
 
         // Инициализация игрока: передаем UUID, имя и стартовую позицию в мире
-        // Координата Y выставлена повыше (120f), чтобы игрок гарантированно заспавнился НАД землей
-        localPlayer = new Player("local-player-id", "Steve", new Vector3f(8f, 30f, 22f),true);
+        localPlayer = new Player("local-player-id", multiplayerUsername, new Vector3f(8f, 30f, 22f), true);
+
+        if (multiplayerHost != null) {
+            gameClient = new GameClient(world);
+            gameClient.setListener(new GameClient.MultiplayerListener() {
+                @Override
+                public void onConnected(String uuid, Vector3f spawn) {
+                    localPlayer.setPosition(spawn);
+                }
+
+                @Override
+                public void onPlayerJoined(hrd.h4rdykrft.network.NetworkMessages.PlayerInfo info) {
+                }
+
+                @Override
+                public void onPlayerLeft(String uuid) {
+                }
+
+                @Override
+                public void onBlockUpdate(int x, int y, int z, byte blockId) {
+                }
+            });
+            try {
+                gameClient.connect(multiplayerHost, multiplayerTcpPort, multiplayerUdpPort, multiplayerUsername);
+                System.out.println("Connecting to " + multiplayerHost + "...");
+            } catch (Exception e) {
+                System.err.println("Failed to connect: " + e.getMessage());
+                gameClient = null;
+            }
+        }
 
         // Загрузка ресурсов (Замени пути на актуальные для твоей структуры папок, если они отличаются)
         shader = new Shader("shaders/main.vert", "shaders/main.frag");
@@ -211,7 +250,11 @@ public class Main {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             // 1. ФИЗИКА И ДВИЖЕНИЕ: Игрок считывает нажатия клавиатуры
-            localPlayer.update(window,0.016f,world);
+            float deltaTime = 0.016f;
+            localPlayer.update(window, deltaTime, world);
+            if (gameClient != null) {
+                gameClient.update(deltaTime, localPlayer);
+            }
 
             // 2. ОБНОВЛЕНИЕ КАМЕРЫ: Камера жестко встает на позицию глаз игрока
             camera.update(localPlayer.getEyePosition(), localPlayer.getPitch(), localPlayer.getYaw());
@@ -234,18 +277,26 @@ public class Main {
 
                 if (ray.hit) {
                     if (currentLeft && !leftMousePressed) {
-                        // ЛКМ: Ломаем блок (заменяем его id на AIR — 0)
-                        world.setBlock(ray.blockX, ray.blockY, ray.blockZ, (byte) 0);
+                        if (gameClient != null && gameClient.isConnected()) {
+                            world.setBlock(ray.blockX, ray.blockY, ray.blockZ, (byte) 0);
+                            gameClient.sendBlockChange(ray.blockX, ray.blockY, ray.blockZ, (byte) 0);
+                        } else {
+                            world.setBlock(ray.blockX, ray.blockY, ray.blockZ, (byte) 0);
+                        }
                     }
                     else if (currentRight && !rightMousePressed) {
-                        // ПКМ: Ставим блок (например, Камень — ID 3)
                         int playerX = (int) Math.floor(localPlayer.getPosition().x);
                         int playerY = (int) Math.floor(localPlayer.getPosition().y);
                         int playerZ = (int) Math.floor(localPlayer.getPosition().z);
 
-                        // Проверка коллизии: не ставим блок туда, где сейчас ноги (playerY) или голова (playerY + 1) игрока
                         if (!(ray.airX == playerX && (ray.airY == playerY || ray.airY == playerY + 1) && ray.airZ == playerZ)) {
-                            world.setBlock(ray.airX, ray.airY, ray.airZ, (byte) inventory.getSelectedItem());
+                            byte blockId = (byte) inventory.getSelectedItem();
+                            if (gameClient != null && gameClient.isConnected()) {
+                                world.setBlock(ray.airX, ray.airY, ray.airZ, blockId);
+                                gameClient.sendBlockChange(ray.airX, ray.airY, ray.airZ, blockId);
+                            } else {
+                                world.setBlock(ray.airX, ray.airY, ray.airZ, blockId);
+                            }
                         }
                     }
                 }
@@ -302,6 +353,13 @@ public class Main {
 
             // Отрисовка геометрии мира
             renderer.renderWorld(world, shader);
+
+            if (gameClient != null) {
+                for (Player remotePlayer : gameClient.getRemotePlayers().values()) {
+                    remotePlayer.render(view, projection, shader);
+                }
+            }
+
             uiManager.render(width[0],height[0]);
             // Смена графических буферов (вывод кадра на экран) и обработка системных событий ОС
             glfwSwapBuffers(window);
@@ -311,7 +369,41 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        // Точка входа приложения
-        new Main().run();
+        if (args.length > 0 && "--server".equals(args[0])) {
+            try {
+                GameServer.main(args);
+            } catch (Exception e) {
+                System.err.println("Server failed: " + e.getMessage());
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        Main main = new Main();
+        main.parseArgs(args);
+        main.run();
+    }
+
+    private void parseArgs(String[] args) {
+        for (int i = 0; i < args.length; i++) {
+            if ("--multiplayer".equals(args[i]) || "--mp".equals(args[i])) {
+                if (i + 1 < args.length) {
+                    multiplayerHost = args[++i];
+                }
+                if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                    try {
+                        multiplayerTcpPort = Integer.parseInt(args[++i]);
+                        multiplayerUdpPort = multiplayerTcpPort + 1;
+                    } catch (NumberFormatException ignored) {
+                        i--;
+                    }
+                }
+                if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                    multiplayerUsername = args[++i];
+                }
+            } else if ("--name".equals(args[i]) && i + 1 < args.length) {
+                multiplayerUsername = args[++i];
+            }
+        }
     }
 }

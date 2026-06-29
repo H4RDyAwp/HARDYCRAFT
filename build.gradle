@@ -28,6 +28,7 @@ switch (OperatingSystem.current()) {
 
 repositories {
     mavenCentral()
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
@@ -47,6 +48,7 @@ dependencies {
     implementation "org.lwjgl:lwjgl-stb::$lwjglNatives"
     implementation "org.joml:joml:${jomlVersion}"
     implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.github.crykn:kryonet:2.22.9'
 }
 jar {
     manifest {

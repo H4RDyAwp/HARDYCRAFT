@@ -406,4 +406,15 @@ public class Player {
     public String getUuid() { return uuid; }
     public String getUsername() { return username; }
     public boolean isCrawling() { return isCrawling; }
+
+    public void applyNetworkState(float x, float y, float z, float yaw, float pitch) {
+        position.set(x, y, z);
+        this.yaw = yaw;
+        this.pitch = pitch;
+        playerBox.setPosition(position, width, currentHeight);
+    }
+
+    public void updateRemote(float deltaTime) {
+        playerModel.update(false, deltaTime);
+    }
 }

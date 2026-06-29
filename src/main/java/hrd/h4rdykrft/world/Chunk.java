@@ -9,6 +9,7 @@ import static org.lwjgl.opengl.GL33.*;
 
 public class Chunk {
     public static final int SIZE_X = 16, SIZE_Y = 512, SIZE_Z = 16;
+    public static boolean headlessMode = false;
 
     private static final int ATLAS_SIZE = 512;
     private static final int TILE_SIZE = 16;
@@ -101,6 +102,10 @@ public class Chunk {
     }
 
     public void buildMesh(World world) {
+        if (headlessMode) {
+            isDirty = false;
+            return;
+        }
         meshBuffer.clear(); // Сбрасываем позицию общего статического буфера
         vertexCount = 0;
 
@@ -233,10 +238,11 @@ public class Chunk {
 
     // Отрисовка чанка. Вызывайте в цикле рендеринга главного потока
     public void render() {
-        if (vertexCount == 0) return;
+        if (headlessMode || vertexCount == 0) return;
         glBindVertexArray(vao);glDrawArrays(GL_TRIANGLES, 0, vertexCount);}
     public void cleanup()
     {
+        if (headlessMode) return;
         if (vao != 0) {
             glDeleteVertexArrays(vao);
             vao = 0;
