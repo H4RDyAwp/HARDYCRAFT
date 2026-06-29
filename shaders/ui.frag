@@ -1,23 +1,33 @@
 #version 330 core
-out vec4 fragColor;
 
-// ИСПРАВЛЕНИЕ: Имя должно строго совпадать с out из вершинного шейдера!
 in vec2 TexCoords;
+out vec4 FragColor;
 
 uniform sampler2D uiTexture;
 uniform vec4 color;
-uniform int isText;
+
+// Режим рендера: 0 = Панель, 1 = Текст, 2 = Текстура иконки
+uniform int renderMode;
 
 void main() {
-    if (isText == 1) {
-        // 1. Читаем маску видимости буквы из КРАСНОГО канала (GL_RED)
-        float alpha = texture(uiTexture, TexCoords).r;
+    if (renderMode == 0) {
+        // РЕЖИМ 0: Сплошной цвет (фоны, панели, рамка выделения слота)
+        FragColor = color;
+    }
+    else if (renderMode == 1) {
+        // РЕЖИМ 1: Текст (STB шрифт хранит данные только в красном канале)
+        vec4 sampled = vec4(1.0, 1.0, 1.0, texture(uiTexture, TexCoords).r);
+        FragColor = color * sampled;
+    }
+    else if (renderMode == 2) {
+        // РЕЖИМ 2: Обычная 2D текстура (для иконок блоков из атласа)
+        vec4 texColor = texture(uiTexture, TexCoords);
 
-        // 2. ИСПРАВЛЕНИЕ: Накладываем маску на переданный из Java цвет текста.
-        // Берем RGB цвет из uniform color, а альфа-канал умножаем на плотность буквы.
-        fragColor = vec4(color.rgb, color.a * alpha);
-    } else {
-        // Обычный рендер для остальных UI элементов (кнопки, панели)
-        fragColor = color;
+        // Отбрасываем полностью прозрачные пиксели (чтобы не было артефактов глубины/смешивания)
+        if (texColor.a < 0.1) {
+            discard;
+        }
+
+        FragColor = texColor * color;
     }
 }

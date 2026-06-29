@@ -1,7 +1,10 @@
 package hrd.h4rdykrft;
 
 import hrd.h4rdykrft.gui.*;
-import hrd.h4rdykrft.render.*;
+import hrd.h4rdykrft.render.Camera;
+import hrd.h4rdykrft.render.Renderer;
+import hrd.h4rdykrft.render.Shader;
+import hrd.h4rdykrft.render.Texture;
 import hrd.h4rdykrft.world.World;
 import hrd.h4rdykrft.player.Player;
 import hrd.h4rdykrft.world.RaycastResult;
@@ -119,7 +122,7 @@ public class Main {
 
         // Инициализация игрока: передаем UUID, имя и стартовую позицию в мире
         // Координата Y выставлена повыше (120f), чтобы игрок гарантированно заспавнился НАД землей
-        localPlayer = new Player("local-player-id", "Steve", new Vector3f(0f, 30f, 0f), true);
+        localPlayer = new Player("local-player-id", "Steve", new Vector3f(8f, 30f, 22f),true);
 
         // Загрузка ресурсов (Замени пути на актуальные для твоей структуры папок, если они отличаются)
         shader = new Shader("shaders/main.vert", "shaders/main.frag");
@@ -186,7 +189,7 @@ public class Main {
 // windowWidth и windowHeight — это текущие размеры твоего окна glfw
         float hpX = (width[0] / 2.0f) - (hpWidth / 2.0f);
         float hpY = height[0] - 45.0f; // 45 пикселей от низа экрана (чтобы быть над хотбаром или рядом)
-        PlayerModel playerModel = new PlayerModel();
+
 // Создаем экземпляр полоски и отдаем его под контроль менеджеру интерфейса
         HealthBar healthBar = new HealthBar(hpX, hpY, hpWidth, hpHeight, localPlayer);
         uiManager.addElement(healthBar);
@@ -296,10 +299,9 @@ public class Main {
             atlas.bind();
             shader.setUniform("texture1", 0);
             // Получаем координаты курсора и состояние левой кнопки мыши
+
             // Отрисовка геометрии мира
             renderer.renderWorld(world, shader);
-            localPlayer.render(view,projection,shader);
-            // Проверяем, движется ли игрок (по векторам скорости или кнопкам управления)
             uiManager.render(width[0],height[0]);
             // Смена графических буферов (вывод кадра на экран) и обработка системных событий ОС
             glfwSwapBuffers(window);

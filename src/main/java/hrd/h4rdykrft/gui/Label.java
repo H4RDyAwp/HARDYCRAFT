@@ -98,7 +98,7 @@ public class Label extends UIElement {
 
         shader.setUniform("offset", x, y);
         shader.setUniform("color", color[0], color[1], color[2], color[3]);
-        shader.setUniform("isText", 1);
+        shader.setUniform("renderMode", 1);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, font.textureId);
@@ -109,7 +109,7 @@ public class Label extends UIElement {
         glBindVertexArray(0);
 
         glBindTexture(GL_TEXTURE_2D, 0);
-        shader.setUniform("isText", 0);
+        shader.setUniform("renderMode", 0);
     }
 
     // Не забывайте освобождать буферы при удалении UI элемента/сцены!

@@ -81,11 +81,11 @@ public class Chunk {
                 for (int y = 0; y < SIZE_Y; y++) {
                     int idx = getVoxelIndex(x, y, z);
                     if (y == h - 1) {
-                        voxels[idx] = Blocks.GRASS.getId();
+                        voxels[idx] = (byte) Blocks.GRASS.getId();
                     } else if (y < h - 1) {
-                        voxels[idx] = (y < h - 5) ? Blocks.STONE.getId() : Blocks.DIRT.getId();
+                        voxels[idx] = (byte) ((y < h - 5) ? Blocks.STONE.getId() : Blocks.DIRT.getId());
                     } else {
-                        voxels[idx] = Blocks.AIR.getId();
+                        voxels[idx] = (byte) Blocks.AIR.getId();
                     }
                 }
             }
@@ -111,27 +111,27 @@ public class Chunk {
                     if (blockId == 0) continue;
 
                     // Top
-                    if (getBlockAt(world, x, y + 1, z) == 0)
+                    if (!Blocks.get(blockId).solid || getBlockAt(world, x, y + 1, z) == 0)
                         addFace(meshBuffer, x, y, z, getUV(blockId, 0), 0);
 
                     // Bottom
-                    if (getBlockAt(world, x, y - 1, z) == 0)
+                    if (!Blocks.get(blockId).solid || getBlockAt(world, x, y - 1, z) == 0)
                         addFace(meshBuffer, x, y, z, getUV(blockId, 1), 1);
 
                     // Front
-                    if (getBlockAt(world, x, y, z + 1) == 0)
+                    if (!Blocks.get(blockId).solid || getBlockAt(world, x, y, z + 1) == 0)
                         addFace(meshBuffer, x, y, z, getUV(blockId, 2), 2);
 
                     // Back
-                    if (getBlockAt(world, x, y, z - 1) == 0)
+                    if (!Blocks.get(blockId).solid || getBlockAt(world, x, y, z - 1) == 0)
                         addFace(meshBuffer, x, y, z, getUV(blockId, 3), 3);
 
                     // Right
-                    if (getBlockAt(world, x + 1, y, z) == 0)
+                    if (!Blocks.get(blockId).solid || getBlockAt(world, x + 1, y, z) == 0)
                         addFace(meshBuffer, x, y, z, getUV(blockId, 4), 4);
 
                     // Left
-                    if (getBlockAt(world, x - 1, y, z) == 0)
+                    if (!Blocks.get(blockId).solid || getBlockAt(world, x - 1, y, z) == 0)
                         addFace(meshBuffer, x, y, z, getUV(blockId, 5), 5);
                 }
             }

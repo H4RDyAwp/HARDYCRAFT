@@ -7,10 +7,15 @@ public class Block {
     private final byte id;
     private final String name;
     private final int[] textures;
+    public final int invId;
+    public final boolean solid;
+    public Block(int id, int invid, String name, boolean solid, int... textureIndices) {
 
-    public Block(int id, String name, int... textureIndices) {
         this.id = (byte) id;
         this.name = name;
+        this.invId = invid;
+        this.solid = solid;
+
         if (textureIndices.length == 1) {
             this.textures = new int[]{textureIndices[0], textureIndices[0], textureIndices[0], textureIndices[0], textureIndices[0], textureIndices[0]};
         } else {
@@ -18,6 +23,7 @@ public class Block {
         }
     }
 
-    public byte getId() { return id; }
+    public int getId() { return id; }
     public int getTexture(int face) { return textures[face]; }
+    public int getInvId() { return invId; }
 }

@@ -13,7 +13,7 @@ public class Panel extends UIElement {
         setupMesh();
     }
 
-    private void setupMesh() {
+    public void setupMesh() {
         float[] vertices = {
                 0, 0,
                 width, 0,
@@ -40,7 +40,7 @@ public class Panel extends UIElement {
 
         // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Используем "color" и отключаем текстовый режим "isText"
         shader.setUniform("color", color[0], color[1], color[2], color[3]);
-        shader.setUniform("isText", 0);
+        shader.setUniform("renderMode", 0);
 
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

@@ -12,7 +12,7 @@ public class Camera {
      * Высота глаз игрока в Minecraft обычно ~1.62 блока над его ногами.
      */
     public void update(Vector3f entityPos, float entityPitch, float entityYaw) {
-        this.position.set(entityPos.x, entityPos.y + 1.62f, entityPos.z); // Смещение на уровень глаз
+        this.position.set(entityPos.x, entityPos.y, entityPos.z); // Смещение на уровень глаз
         this.pitch = entityPitch;
         this.yaw = entityYaw;
     }
