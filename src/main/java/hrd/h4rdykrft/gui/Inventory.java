@@ -1,7 +1,8 @@
 package hrd.h4rdykrft.gui;
 
 import hrd.h4rdykrft.render.Shader;
-import org.lwjgl.glfw.GLFW; // Импортируем GLFW для работы с клавиатурой
+import hrd.h4rdykrft.item.ItemStack;
+import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class Inventory extends UIElement {
         this.rows = rows;
         this.slots = new ArrayList<>();
         initSlots();
-        selectionBorder = new Image(0,0,50,50,"textures/equipped.png");
+        selectionBorder = new Image(0, 0, 50, 50, "textures/equipped.png");
     }
 
     private void initSlots() {
@@ -32,8 +33,23 @@ public class Inventory extends UIElement {
             for (int col = 0; col < columns; col++) {
                 int slotX = (int) (this.x + col * (slotSize + padding));
                 int slotY = (int) (this.y + row * (slotSize + padding));
-                slots.add(new InventorySlot(slotX, slotY, 0));
+                slots.add(new InventorySlot(slotX, slotY));
             }
+        }
+    }
+
+    @Override
+    public void render(Shader shader) {
+        for (InventorySlot slot : slots) {
+            slot.render(shader);
+        }
+
+        // Отображаем рамку выделения для выбранного слота
+        if (selectedSlotIndex < slots.size()) {
+            InventorySlot selectedSlot = slots.get(selectedSlotIndex);
+            selectionBorder.x = selectedSlot.x;
+            selectionBorder.y = selectedSlot.y;
+            selectionBorder.render(shader);
         }
     }
 
@@ -86,16 +102,108 @@ public class Inventory extends UIElement {
         }
     }
 
-    // Получить предмет, который сейчас выбран игроком
-    public int getSelectedItem() {
-        if (selectedSlotIndex < slots.size()) {
-            return slots.get(selectedSlotIndex).itemId;
+    // === Методы для работы со слотами ===
+
+    /**
+     * Добавить предметы в инвентарь
+     * @param itemStack стак для добавления
+     * @return количество предметов, которые не поместились
+     */
+    public int addItems(ItemStack itemStack) {
+        if (itemStack == null || itemStack.isEmpty()) {
+            return 0;
         }
-        return 0;
+
+        ItemStack toAdd = itemStack.copy();
+
+        // Сначала ищем слот с такими же предметами
+        for (InventorySlot slot : slots) {
+            if (!slot.isEmpty() && slot.getItemStack().canCombineWith(toAdd)) {
+                toAdd.setCount(slot.addItems(toAdd));
+                if (toAdd.isEmpty()) {
+                    return 0;
+                }
+            }
+        }
+
+        // Затем ищем пустые слоты
+        for (InventorySlot slot : slots) {
+            if (slot.isEmpty()) {
+                toAdd.setCount(slot.addItems(toAdd));
+                if (toAdd.isEmpty()) {
+                    return 0;
+                }
+            }
+        }
+
+        return toAdd.getCount();
     }
 
+    /**
+     * Получить выбранный стак предметов
+     */
+    public ItemStack getSelectedItemStack() {
+        if (selectedSlotIndex < slots.size()) {
+            return slots.get(selectedSlotIndex).getItemStack();
+        }
+        return null;
+    }
+
+    /**
+     * Получить стак предметов из слота по индексу
+     */
+    public ItemStack getItemStackAt(int slotIndex) {
+        if (slotIndex >= 0 && slotIndex < slots.size()) {
+            return slots.get(slotIndex).getItemStack();
+        }
+        return null;
+    }
+
+    /**
+     * Получить ID выбранного предмета
+     */
+    public int getSelectedItemId() {
+        ItemStack selected = getSelectedItemStack();
+        return selected == null ? 0 : selected.getItem().getId();
+    }
+
+    /**
+     * Получить индекс выбранного слота
+     */
     public int getSelectedSlotIndex() {
         return selectedSlotIndex;
+    }
+
+    /**
+     * Установить предмет в слот
+     */
+    public void setItemStack(int slotIndex, ItemStack itemStack) {
+        if (slotIndex >= 0 && slotIndex < slots.size()) {
+            slots.get(slotIndex).setItemStack(itemStack);
+        }
+    }
+
+    /**
+     * Очистить слот
+     */
+    public void clearSlot(int slotIndex) {
+        if (slotIndex >= 0 && slotIndex < slots.size()) {
+            slots.get(slotIndex).clearSlot();
+        }
+    }
+
+    /**
+     * Получить все слоты
+     */
+    public List<InventorySlot> getSlots() {
+        return new ArrayList<>(slots);
+    }
+
+    /**
+     * Получить количество слотов
+     */
+    public int getSlotCount() {
+        return slots.size();
     }
 
     @Override
