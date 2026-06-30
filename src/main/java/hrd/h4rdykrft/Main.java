@@ -202,13 +202,8 @@ public class Main {
         });
         uiManager.addElement(testButton);
         inventory = new Inventory(1280,720,10,1);
-        inventory.addItem(1);
-        inventory.addItem(2);
-        inventory.addItem(3);
-        inventory.addItem(4);
-        inventory.addItem(5);
-        inventory.addItem(6);
-        inventory.addItem(7);
+        // Добавляем тестовые блоки в инвентарь
+        // inventory.addItems(new ItemStack(...));
         uiManager.addElement(inventory);
     }
 
@@ -290,7 +285,7 @@ public class Main {
                         int playerZ = (int) Math.floor(localPlayer.getPosition().z);
 
                         if (!(ray.airX == playerX && (ray.airY == playerY || ray.airY == playerY + 1) && ray.airZ == playerZ)) {
-                            byte blockId = (byte) inventory.getSelectedItem();
+                            byte blockId = (byte) inventory.getSelectedItemId();
                             if (gameClient != null && gameClient.isConnected()) {
                                 world.setBlock(ray.airX, ray.airY, ray.airZ, blockId);
                                 gameClient.sendBlockChange(ray.airX, ray.airY, ray.airZ, blockId);

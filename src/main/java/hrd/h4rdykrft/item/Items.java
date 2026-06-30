@@ -10,6 +10,39 @@ import java.util.Map;
 public class Items {
     private static final Map<Integer, Item> ITEMS = new HashMap<>();
 
+    // === БЛОКИ ===
+    public static final Item AIR = register(new Item.ItemBuilder(0, "Air", ItemType.BLOCK)
+            .maxStackSize(1)
+            .build());
+    
+    public static final Item DIRT = register(new Item.ItemBuilder(3, "Dirt", ItemType.BLOCK)
+            .maxStackSize(64)
+            .build());
+    
+    public static final Item GRASS = register(new Item.ItemBuilder(2, "Grass", ItemType.BLOCK)
+            .maxStackSize(64)
+            .build());
+    
+    public static final Item STONE = register(new Item.ItemBuilder(4, "Stone", ItemType.BLOCK)
+            .maxStackSize(64)
+            .build());
+    
+    public static final Item GOLD = register(new Item.ItemBuilder(5, "Gold Ore", ItemType.BLOCK)
+            .maxStackSize(64)
+            .build());
+    
+    public static final Item OAK_PLANKS = register(new Item.ItemBuilder(6, "Oak Planks", ItemType.BLOCK)
+            .maxStackSize(64)
+            .build());
+    
+    public static final Item OAK_LOG = register(new Item.ItemBuilder(7, "Oak Log", ItemType.BLOCK)
+            .maxStackSize(64)
+            .build());
+    
+    public static final Item GLASS = register(new Item.ItemBuilder(9, "Glass", ItemType.BLOCK)
+            .maxStackSize(64)
+            .build());
+
     // === ИНСТРУМЕНТЫ ===
     public static final Item STONE_PICKAXE = register(new Item.ItemBuilder(101, "Stone Pickaxe", ItemType.TOOL)
             .durability(131)

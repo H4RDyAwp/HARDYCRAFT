@@ -93,9 +93,13 @@ public class InventorySlot extends UIElement {
      */
     public int addItems(ItemStack stackToAdd) {
         if (isEmpty()) {
-            this.itemStack = stackToAdd.copy();
+            int maxStackSize = stackToAdd.getItem().getMaxStackSize();
+            int canAdd = Math.min(stackToAdd.getCount(), maxStackSize);
+            int remaining = stackToAdd.getCount() - canAdd;
+            
+            this.itemStack = new ItemStack(stackToAdd.getItem(), canAdd, stackToAdd.getDurability());
             updateImage();
-            return 0;
+            return remaining;
         }
 
         if (itemStack.canCombineWith(stackToAdd)) {

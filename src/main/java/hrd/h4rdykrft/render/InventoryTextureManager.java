@@ -57,7 +57,7 @@ public class InventoryTextureManager {
             // Загружаем изображение
             ByteBuffer imageData = stbi_load(path, width, height, channels, 4);
             
-            if (imageData == NULL) {
+            if (imageData == null) {
                 System.err.println("⚠️  Текстура не найдена: " + path + " - Используется ошибка-текстура");
                 int errorTextureId = createErrorTexture();
                 textureCache.put(cacheKey, errorTextureId);

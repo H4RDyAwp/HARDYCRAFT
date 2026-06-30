@@ -21,9 +21,9 @@ public class IntegrationExample {
         ItemStack woodSword = new ItemStack(Items.WOODEN_SWORD, 1);
         
         // Добавляем блоки
-        ItemStack dirt = new ItemStack(Items.DIRT, 64);
-        ItemStack stone = new ItemStack(Items.STONE, 32);
-        ItemStack wood = new ItemStack(Items.OAK_PLANKS, 32);
+        ItemStack dirt = new ItemStack(Items.getItem(Blocks.DIRT.getInvId()), 64);
+        ItemStack stone = new ItemStack(Items.getItem(Blocks.STONE.getInvId()), 32);
+        ItemStack wood = new ItemStack(Items.getItem(Blocks.OAK_PLANKS.getInvId()), 32);
         
         // Добавляем в инвентарь
         inventory.addItems(woodPickaxe);

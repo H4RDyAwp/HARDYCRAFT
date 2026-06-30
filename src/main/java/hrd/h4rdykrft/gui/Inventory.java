@@ -205,25 +205,4 @@ public class Inventory extends UIElement {
     public int getSlotCount() {
         return slots.size();
     }
-
-    @Override
-    public void render(Shader shader) {
-        for (InventorySlot slot : slots) {
-            slot.render(shader);
-        }
-
-        InventorySlot activeSlot = slots.get(selectedSlotIndex);
-        selectionBorder.x = activeSlot.x;
-        selectionBorder.y = activeSlot.y;
-        selectionBorder.render(shader);
-    }
-    public boolean addItem(int itemId) {
-        for (InventorySlot slot : slots) {
-            if (slot.itemId == 0) {
-                slot.setItemId(itemId); // Используем метод обновления из прошлого шага
-                return true;
-            }
-        }
-        return false;
-    }
 }

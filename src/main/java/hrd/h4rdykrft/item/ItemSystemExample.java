@@ -1,5 +1,7 @@
 package hrd.h4rdykrft.item;
 
+import hrd.h4rdykrft.block.Blocks;
+
 /**
  * Пример использования системы предметов
  */
@@ -12,8 +14,8 @@ public class ItemSystemExample {
         // Создаём стаки предметов
         ItemStack stonePickaxe = new ItemStack(Items.STONE_PICKAXE, 1);
         ItemStack woodSword = new ItemStack(Items.WOODEN_SWORD, 1);
-        ItemStack dirt = new ItemStack(Items.DIRT, 32);
-        ItemStack moreNDirt = new ItemStack(Items.DIRT, 40);
+        ItemStack dirt = new ItemStack(Items.getItem(Blocks.DIRT.getInvId()), 32);
+        ItemStack moreNDirt = new ItemStack(Items.getItem(Blocks.DIRT.getInvId()), 40);
         
         System.out.println("Создано: " + stonePickaxe);
         System.out.println("Создано: " + woodSword);
